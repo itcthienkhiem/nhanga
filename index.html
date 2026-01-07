@@ -9,8 +9,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <script src="js/xlsx.full.min.js"></script>
-  <script src="js/confetti.browser.min.js"></script>
+  <!-- XLSX (Excel Reader) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+
+<!-- Confetti -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+
 
   <style>
     :root{
@@ -1137,8 +1145,14 @@ function nowTimestamp() {
     let currentAwardIdx = 0;
     let tempWinner = null;
 
-    const tickSound = new Audio('sounds/sound.mp3');
-    const winSound = new Audio('sounds/tada.mp3');
+    const tickSound = new Audio(
+  'https://assets.mixkit.co/sfx/preview/mixkit-click-error-1110.mp3'
+);
+
+    const tickSound = new Audio(
+  'https://assets.mixkit.co/sfx/preview/mixkit-interface-click-1126.mp3'
+);
+
 
     document.getElementById('fileInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
