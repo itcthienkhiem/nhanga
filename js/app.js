@@ -5,6 +5,47 @@ let forceAccount = "NhanLT10";
 let confettiRAF = null;
 let confettiRunning = false;
 
+function checkSystemPassword() {
+  const input = document.getElementById('sysPassword').value;
+  const errorMsg = document.getElementById('pwError');
+  
+  // Lấy thời gian hiện tại
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const hh = String(now.getHours()).padStart(2, '0');
+
+  // Tạo mật khẩu đúng theo công thức: ddmmyyebs@hh
+  const correctPassword = `${dd}${mm}${yy}ebs@${hh}`;
+
+  if (input === correctPassword) {
+    // Nếu đúng: Ẩn màn hình mật khẩu
+    document.getElementById('passwordOverlay').style.display = 'none';
+    // Phát một tiếng click nhẹ để tạo cảm giác mở khóa
+    tickSound.play().catch(() => {});
+  } else {
+    // Nếu sai: Hiển thị lỗi và rung nhẹ input
+    errorMsg.style.display = 'block';
+    const inputField = document.getElementById('sysPassword');
+    inputField.style.borderColor = '#ef4444';
+    inputField.value = '';
+    
+    // Hiệu ứng rung (shake) đơn giản
+    inputField.animate([
+      { transform: 'translateX(-5px)' },
+      { transform: 'translateX(5px)' }
+    ], { duration: 100, iterations: 3 });
+  }
+}
+
+// Cho phép nhấn Enter để xác nhận
+document.getElementById('sysPassword')?.addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') {
+    checkSystemPassword();
+  }
+});
+
 function nowTimeLabel() {
   const d = new Date();
   const hh = String(d.getHours()).padStart(2, '0');
