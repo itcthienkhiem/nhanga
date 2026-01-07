@@ -1,7 +1,23 @@
-    let participants = [];
-    let winnersList = [];
-	let forceNextWinner = false;
-	let forceAccount = "NhanLT10";
+let participants = [];
+let winnersList = [];
+let forceNextWinner = false;
+let forceAccount = "NhanLT10";
+let confettiRAF = null;
+let confettiRunning = false;
+
+function nowTimeLabel() {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const MM = String(d.getMonth() + 1).padStart(2, '0');
+  return `${hh}:${mm}:${ss} · ${dd}/${MM}`;
+}
+
+function nowTimestamp() {
+  return new Date().toISOString(); // cho Excel / backend
+}
 
     const awards = [
       { name: "3rd: Philips Neck Massager PPM3522", short: "3rd", rank: "3rd", img: "3rd-a.png" },
@@ -13,8 +29,14 @@
     let currentAwardIdx = 0;
     let tempWinner = null;
 
-    const tickSound = new Audio('https://www.soundjay.com/buttons/button-selection-01.mp3');
-    const winSound = new Audio('https://www.myinstants.com/media/sounds/tada.mp3');
+    const tickSound = new Audio(
+  'https://assets.mixkit.co/sfx/preview/mixkit-interface-click-1126.mp3'
+);
+
+const winSound = new Audio(
+  'https://assets.mixkit.co/sfx/preview/mixkit-game-level-completed-2059.mp3'
+);
+
 
     document.getElementById('fileInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
@@ -73,7 +95,13 @@
     list.appendChild(li);
   });
 }
-
+function ensureConfettiOnTop() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll('canvas').forEach(c => {
+      c.classList.add('confetti-canvas');
+    });
+  });
+}
 
 function startDraw() {
   document.getElementById('welcomeArea').classList.add('hidden');
@@ -202,6 +230,8 @@ highlightCurrentAward();
     }
 
     function showWinnerModal() {
+	ensureConfettiOnTop(); 
+	startContinuousFireworks();
       winSound.play();
 
       const sparkleColors = ['#FFFFFF', '#EAF6FF', '#BFE9FF', '#00A4E4', '#005DAA'];
@@ -243,10 +273,15 @@ highlightCurrentAward();
     }
 
     function confirmWinner() {
+	stopFireworks();
+	const winTimeISO = nowTimestamp();
+	const winTimeLabel = nowTimeLabel();
   winnersList.push({
     ...tempWinner,
     award: awards[currentAwardIdx].name,
-    rank: awards[currentAwardIdx].rank
+    rank: awards[currentAwardIdx].rank,
+  winTimeISO,        // ✅ cho Excel
+  winTimeLabel       // ✅ cho UI
   });
   
   const currentAward = awards[currentAwardIdx];
@@ -262,8 +297,17 @@ if (historyItem) {
   const winnerText = historyItem.querySelector('.history-winner-text');
   if (winnerText) {
     winnerText.innerHTML = `
-      ${tempWinner.acc} · ${tempWinner.dv}
-    `;
+  ${tempWinner.acc} · ${tempWinner.dv}
+  <div style="
+    font-size:0.65rem;
+    margin-top:2px;
+    color:#64748b;
+    letter-spacing:0.3px;
+  ">
+    ⏱ ${nowTimeLabel()}
+  </div>
+`;
+
     winnerText.style.fontSize = '0.75rem';
     winnerText.style.fontWeight = '600';
     winnerText.style.color = '#0f172a';
@@ -293,17 +337,32 @@ if (historyItem) {
   highlightCurrentAward();
 }
 
-
     function cancelWinner() {
+	stopFireworks();
       const li = document.createElement('li');
       li.className = 'side-item';
       li.style.color = "#c7d2fe";
 
       li.innerHTML = `
-        <span class="acc" style="text-decoration:line-through">${tempWinner.acc}</span>
-        <small class="rank" style="color:#bcdcff; font-weight:700;">SKIP</small>
-        <div class="award" style="opacity:.85;">${awards[currentAwardIdx].name}</div>
-      `;
+  <span class="acc" style="text-decoration:line-through">
+    ${tempWinner.acc}
+  </span>
+  <small class="rank" style="color:#bcdcff; font-weight:700;">SKIP</small>
+
+  <div class="award" style="opacity:.85;">
+    ${awards[currentAwardIdx].name}
+  </div>
+
+  <div style="
+    font-size:0.62rem;
+    margin-top:2px;
+    color:#94a3b8;
+    letter-spacing:0.3px;
+  ">
+    ⏱ ${nowTimeLabel()}
+  </div>
+`;
+
 
       document.getElementById('skippedList').prepend(li);
       participants = participants.filter(p => p.acc !== tempWinner.acc);
@@ -420,16 +479,37 @@ if (historyItem) {
         ">${w.ten}</div>
 
         <div style="
-          margin-top: 6px;
-          font-size: 0.92rem;
-          color: rgba(7,18,37,0.92);
-          font-weight: 650;
-          letter-spacing: 0.25px;
-          text-align:center;
-          position:relative;
-        ">
-          ${w.dv} · <b style="color: rgba(0,93,170,0.98); font-weight: 800;">${w.acc}</b>
-        </div>
+  margin-top: 6px;
+  font-size: 0.92rem;
+  color: rgba(7,18,37,0.92);
+  font-weight: 650;
+  letter-spacing: 0.25px;
+  text-align:center;
+  position:relative;
+  display:flex;
+  justify-content:center;
+  align-items:baseline;
+  gap:6px;
+  flex-wrap:wrap;
+">
+  <span>
+    ${w.dv} · 
+    <b style="color: rgba(0,93,170,0.98); font-weight: 800;">
+      ${w.acc}
+    </b>
+  </span>
+
+  <span style="
+    font-size:0.68rem;
+    color:#64748b;
+    font-weight:500;
+    letter-spacing:0.3px;
+    white-space:nowrap;
+  ">
+    ⏱ ${w.winTimeLabel}
+  </span>
+</div>
+
       </div>`;
     }
 	function exportResults() {
@@ -440,13 +520,16 @@ if (historyItem) {
 
   // Chuẩn hóa dữ liệu xuất
   const exportData = winnersList.map((w, index) => ({
-    'No': index + 1,
-    'Rank': w.rank,
-    'Award': w.award,
-    'Full Name': w.ten,
-    'Account': w.acc,
-    'Department': w.dv
-  }));
+  'No': index + 1,
+  'Rank': w.rank,
+  'Award': w.award,
+  'Full Name': w.ten,
+  'Account': w.acc,
+  'Department': w.dv,
+  'Win Time': w.winTimeLabel,     // dễ đọc
+  'Win Time (ISO)': w.winTimeISO  // chuẩn hệ thống
+}));
+
 
   // Tạo worksheet & workbook
   const ws = XLSX.utils.json_to_sheet(exportData);
@@ -494,10 +577,48 @@ function updateSkippedCount() {
   }
 }
 
-
 // Tự động theo dõi DOM
 const observer = new MutationObserver(updateSkippedCount);
 observer.observe(skippedList, { childList: true });
 
 // Gọi lần đầu để set đúng số lượng khi load
 updateSkippedCount();
+
+function startContinuousFireworks() {
+  if (confettiRunning) return;
+  confettiRunning = true;
+
+  const colors = ['#FFD700', '#FFFFFF', '#00A4E4', '#005DAA'];
+
+  function shoot() {
+    if (!confettiRunning) return;
+
+    confetti({
+      particleCount: 60,
+      spread: 80,
+      startVelocity: 35,
+      gravity: 0.9,
+      ticks: 260,
+      scalar: 0.9,
+      origin: {
+        x: Math.random() * 0.8 + 0.1,
+        y: Math.random() * 0.3 + 0.3
+      },
+      colors
+    });
+
+    confettiRAF = requestAnimationFrame(() => {
+      setTimeout(shoot, 888); // tốc độ bắn (ms) – chỉnh tại đây
+    });
+  }
+
+  shoot();
+}
+
+function stopFireworks() {
+  confettiRunning = false;
+  if (confettiRAF) {
+    cancelAnimationFrame(confettiRAF);
+    confettiRAF = null;
+  }
+}
